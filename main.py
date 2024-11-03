@@ -5,10 +5,12 @@ import pandas as pd
 import csv
 from datetime import datetime
 import os
+from data_entry import get_date, get_amount, get_category, get_description
 
 class CSV:
     # CSV_FILE --> variable, finance_data -->  name of file that we work with 
     CSV_FILE = "E:/python/finance_tracker/finance_data.csv"
+    COLUMNS = ["date", "amount", "category", "description"]
     
     #1 initialize the csv file
     @classmethod
@@ -29,14 +31,43 @@ class CSV:
         except FileNotFoundError:
             print("CSV file not found. Creating new file...")
             #crate the file (start by having some headings or columns)
-            df = pd.DataFrame(columns=["date", "amount", "category", "description"])
+            df = pd.DataFrame(columns=cls.COLUMNS)
             #dataframe --> object within pandas that allows us to access different rows, columns from a csv file
 
             #export the dataframe to a csv file
             df.to_csv(cls.CSV_FILE, index=False)
             print("CSV file created.")
 
-# Test the initialization
-if __name__ == "__main__":
-    print("Current Working Directory:", os.getcwd())
+    #2 add some entries to the file
+    @classmethod
+    def add_entry(cls,date, amount, category, description):
+        #CSV writer
+        new_entry = {
+           "date": date,
+           "amount": amount,
+           "category": category,
+           "description": description
+        }
+        #  opened a csv file in append mode
+        with open(cls.CSV_FILE, "a", newline="") as csvfile: # a --> pending to the end of the file
+            writer = csv.DictWriter(csvfile, fieldnames= cls.COLUMNS)
+            #CSV WRITER --> take a dictionary and write it into the CSV file 
+            writer.writerow(new_entry)
+            print("Entry added successfully!")
+
+#write a function that will call these functions in the oreder that we want in oreder to collect our data
+def add():
     CSV.initialize_csv()
+    date = get_date("Enter the date of the transaction (dd-mm-yyyy) or enter for today's date: ", allow_default=True)
+    amount = get_amount()
+    category = get_category()
+    description = get_description()
+    CSV.add_entry(date, amount, category, description)
+
+# Test the initialization
+# if __name__ == "__main__":
+#   print("Current Working Directory:", os.getcwd())
+#   CSV.initialize_csv()
+#   CSV.add_entry("03-11-2024",5000, "Income", "Interest")
+
+add()
