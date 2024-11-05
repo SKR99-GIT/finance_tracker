@@ -11,6 +11,7 @@ class CSV:
     # CSV_FILE --> variable, finance_data -->  name of file that we work with 
     CSV_FILE = "E:/python/finance_tracker/finance_data.csv"
     COLUMNS = ["date", "amount", "category", "description"]
+    FORMAT =  "%d-%m-%Y"
     
     #1 initialize the csv file
     @classmethod
@@ -55,6 +56,38 @@ class CSV:
             writer.writerow(new_entry)
             print("Entry added successfully!")
 
+    #3 give us all the transactions within date range
+    @classmethod
+    def get_transactions(cls, start_date, end_date):
+        df = pd.read_csv(cls.CSV_FILE)
+        # what we do next -->  convert all of the dates inside of the date column to a datetime object - use them to filter by different transactions
+        df["date"] = pd.to_datetime(df["date"], format=CSV.FORMAT)
+        start_date = datetime.strptime(start_date, CSV.FORMAT)
+        end_date = datetime.strptime(end_date, CSV.FORMAT)
+
+        #create something known as a mask --> MASK = something that we can aooly to the different rows insiden of a data frame to see if we should select that row or not
+
+        #check the entered date between start_date and end_date
+        mask = (df["date"] >= start_date) & (df["date"] <= end_date)
+        #apply to every single row inside of dataframe and it's going to filter the different elements
+        #returns a new filtered dataframe
+        filtered_df = df.loc[mask]
+
+
+        if filtered_df.empty:
+            print("No transactions found in the gives data range")
+        else:
+            print(f"Transactions from {start_date.strftime(CSV.FORMAT)} to {end_date.strftime(CSV.FORMAT)}")
+            print (filtered_df.to_string(index=False, formatters={"date": lambda x: x.strftime(CSV.FORMAT)}))
+
+            total_income = filtered_df[filtered_df["category"] == "Income"]["amount"].sum()
+            total_expense = filtered_df[filtered_df["category"] == "Expense"]["amount"].sum()
+            print("\nSummary:")
+            print(f"Total Income: LKR{total_income:.2f}")
+            print(f"Total Expense: LKR{total_expense:.2f}")
+            print(f"Net Savings: LKR{(total_income - total_expense):.2f}")
+
+
 #write a function that will call these functions in the oreder that we want in oreder to collect our data
 def add():
     CSV.initialize_csv()
@@ -64,10 +97,37 @@ def add():
     description = get_description()
     CSV.add_entry(date, amount, category, description)
 
+#if i want to plot it and want to see it on a graph --> use MATPLOTLIB
+
+
+
 # Test the initialization
 # if __name__ == "__main__":
 #   print("Current Working Directory:", os.getcwd())
 #   CSV.initialize_csv()
 #   CSV.add_entry("03-11-2024",5000, "Income", "Interest")
 
-add()
+#CSV.get_transactions("01-01-2024", "30-12-2024")
+#add()
+
+def main():
+    while True:
+        print("\n1. Add a new transaction")
+        print("2. View transactions and summery within a date range")
+        print("3. Exit")
+        choice = input("Enter your choice (1-3): ")
+
+        if choice == "1":
+            add()
+        elif choice == "2":
+            start_date = get_date("Enter the start date (dd-mm-yyy): ")
+            end_date = get_date("Enter the end date (dd-mm-yyy): ")
+            CSV.get_transactions(start_date, end_date)
+        elif choice == "3":
+            print("Existing...")
+            break
+        else:
+            print("Invalid choice.. Enter 1, 2 or 3")
+
+if __name__ == "__main__":
+    main()
